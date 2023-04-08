@@ -68,16 +68,6 @@
   [:div
    (simulation->svg {:layout layout :vehicles (get vehicles (:time-slot @state))})])
 
-(defn home-page []
-  [:div
-   [:h1 {:className "title"} "Four way junction"]
-   [:div {:className "app-container"}
-    [:div {:className "simulation"}
-     (if @state
-       [visualisation @state]
-       [:h1 "...getting simulation"])]
-    ]])
-
 
 (defn next-tick []
   (if (not @state)
@@ -92,7 +82,6 @@
       (.then
        (fn [body]
          (let [data (reader/read-string body)]
-           (println (:layout data) (:time-slot-to-vehicles data))
            (reset! state {:layout (:layout data)
                           :vehicles (:time-slot-to-vehicles data)
                           :time-slot 0})
@@ -100,7 +89,22 @@
            (js/setInterval next-tick (:resolution-ms data)))))
       (.catch (fn [err] (println "Error in start: " (.-message err))))))
 
+(defn control-pane []
+  [:div
+   [:button {:on-click (fn [] (start))} "Start"]])
+
+(defn home-page []
+  [:div
+   [:h1 {:className "title"} "Four way junction"]
+   [:div {:className "app-container"}
+    [:div {:className "simulation"}
+     [control-pane]
+     (when @state
+       [visualisation @state])]
+    ]])
+
 (defn init []
   (println "I'm a work in progress...")
   (rd/render [home-page] (.getElementById js/document "root"))
-  (start))
+  ;;(start)
+  )

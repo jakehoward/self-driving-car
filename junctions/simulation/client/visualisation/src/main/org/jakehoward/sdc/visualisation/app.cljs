@@ -48,15 +48,27 @@
      [:svg {:viewBox (str "0 0 " x-max " " y-max) :width width :height height}
       [:g
        [:rect {:width x-max :height y-max :fill "#ccc" :x 0 :y 0}]
-       [:rect {:width (* 2 ns-lane-width) :height y-max :fill "#333" :x (- centre-x ns-lane-width) :y 0}]
-       [:rect {:width x-max :height (* 2 ew-lane-width) :fill "#444" :x 0 :y (- centre-y ew-lane-width)}]
+       [:rect {:width (* 2 ns-lane-width)
+               :height y-max
+               :fill "#333"
+               :x (- centre-x ns-lane-width)
+               :y 0}]
+       [:rect {:width x-max
+               :height (* 2 ew-lane-width)
+               :fill "#444"
+               :x 0
+               :y (- centre-y ew-lane-width)}]
        [:g
         (->>
          vehicles
          (map
           (fn [v]
             [:rect
-             {:width (:width v) :height (:length v) :fill (:color v) :x (get-in v [:front-left :x]) :y (get-in v [:front-left :y])}]))
+             {:width (:width v)
+              :height (:length v)
+              :fill (:color v)
+              :x (get-in v [:front-left :x])
+              :y (get-in v [:front-left :y])}]))
          flatten
          vec)]
        [:line {:x1 0 :y1 centre-y :x2 x-max :y2 centre-y :stroke "yellow"}]
@@ -105,6 +117,4 @@
 
 (defn init []
   (println "I'm a work in progress...")
-  (rd/render [home-page] (.getElementById js/document "root"))
-  ;;(start)
-  )
+  (rd/render [home-page] (.getElementById js/document "root")))

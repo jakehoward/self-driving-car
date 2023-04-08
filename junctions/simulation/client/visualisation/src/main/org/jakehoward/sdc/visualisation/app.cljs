@@ -88,8 +88,10 @@
                            (update s :time-slot inc)
                            s)))))
 
-(defn start []
-  (-> (.fetch js/window "http://localhost:8081/api/v1/simulation/junction/four-way")
+(defn start [protocol]
+  (-> (.fetch js/window (str
+                         "http://localhost:8081/api/v1/simulation/junction/four-way?protocol="
+                         protocol))
       (.then (fn [res] (.text res)))
       (.then
        (fn [body]
@@ -98,12 +100,12 @@
                           :vehicles (:time-slot-to-vehicles data)
                           :time-slot 0})
            (when @interval (js/clearInterval @interval))
-           (js/setInterval next-tick (:resolution-ms data)))))
+           (reset! interval (js/setInterval next-tick (:resolution-ms data))))))
       (.catch (fn [err] (println "Error in start: " (.-message err))))))
 
 (defn control-pane []
   [:div
-   [:button {:on-click (fn [] (start))} "Start"]])
+   [:button {:on-click (fn [] (start "example"))} "Start"]])
 
 (defn home-page []
   [:div

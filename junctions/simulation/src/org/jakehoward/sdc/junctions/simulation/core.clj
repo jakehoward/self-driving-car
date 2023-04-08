@@ -25,13 +25,18 @@
 (defroutes simulation-routes
   (context
     "/api/v1/simulation/junction" []
-    (GET "/four-way" []
-      {:body (prn-str {:type :four-way
-                       :layout example-layout
-                       :resolution-ms 50
-                       :time-slot-to-vehicles (example-time-slot-to-vehicles example-layout)})
-       :headers {"Access-Control-Allow-Origin" "*"
-                 "Content-Type" "application/edn"}})))
+    (GET "/four-way" [_ :as req]
+         (let [protocol       (get-in req [:params :protocol])
+               [layout ts->v] (case protocol
+                                "example" [example-layout
+                                           (example-time-slot-to-vehicles example-layout)])]
+           {:body (prn-str {:type :four-way
+                            :protocol protocol
+                            :layout layout
+                            :resolution-ms 50
+                            :time-slot-to-vehicles ts->v})
+            :headers {"Access-Control-Allow-Origin" "*"
+                      "Content-Type" "application/edn"}}))))
 
 (defroutes base-routes
   (GET "/status" [] "ok"))

@@ -1,0 +1,29 @@
+{:paths ["src" "resources"]
+ :deps
+ {org.clojure/clojure {:mvn/version "1.11.1"}
+
+  ring/ring-core {:mvn/version "1.9.6"}
+  ring/ring-jetty-adapter {:mvn/version "1.9.6"}
+  ring/ring-json {:mvn/version "0.5.1"}
+  ring/ring-defaults {:mvn/version "0.3.4"}
+
+  compojure/compojure {:mvn/version "1.7.0"}
+
+  cheshire/cheshire {:mvn/version "5.11.0"}
+
+  ;; Ideally only in :test alias :extra-deps
+  ;; but then cider nrepl doesn't have it so
+  ;; we don't get any help in emacs...
+  ring/ring-mock {:mvn/version "0.4.0"}}
+
+ :test {:extra-paths ["test"]
+        :extra-deps {io.github.cognitect-labs/test-runner
+                     {:git/url "https://github.com/cognitect-labs/test-runner.git"
+                      :sha "9e35c979860c75555adaff7600070c60004a0f44"}}
+        :main-opts ["-m" "cognitect.test-runner"]
+        :exec-fn cognitect.test-runner.api/test}}
+
+;; Useful commands
+;; clj -M -e "(compile 'server.core)" # compile
+;; clj -M -m server.core # run
+;; clj -X:test

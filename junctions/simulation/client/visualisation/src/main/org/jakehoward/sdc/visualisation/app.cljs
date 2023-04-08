@@ -1,6 +1,7 @@
 (ns org.jakehoward.sdc.visualisation.app
   (:require [reagent.core :as r]
-            [reagent.dom :as rd]))
+            [reagent.dom :as rd]
+            [cljs.reader :as reader]))
 
 ;; --------
 ;; fixtures
@@ -19,7 +20,7 @@
         centre-x    (/ (:x-max layout) 2)
         x           (+ 2 (- centre-x (get-in layout [:n->s :lane-width])))
         time-slots  (dec initial-y)
-        example-car {:id 1 :length vehicle-length :width 7 :front-left {:x x :y 11}}]
+        example-car {:id 1 :color "lightgreen" :length vehicle-length :width 7 :front-left {:x x :y 11}}]
     (->> (for [s (range time-slots)]
            [s [(assoc-in example-car [:front-left :y] (- initial-y s))]])
          (into {}))))
@@ -28,7 +29,11 @@
 ;; app
 ;; ---
 
-(defonce state (r/atom {:layout example-layout :vehicles (example-cars example-layout) :time-slot 0}))
+;; (defonce state (r/atom {:layout example-layout :vehicles (example-cars example-layout) :time-slot 0}))
+
+(defonce state (r/atom nil))
+
+(defonce interval (r/atom nil))
 
 (defn simulation->svg [{:keys [layout vehicles]}]
   (let [x-max    (:x-max layout)
@@ -51,7 +56,7 @@
          (map
           (fn [v]
             [:rect
-             {:width (:width v) :height (:length v) :fill "green" :x (get-in v [:front-left :x]) :y (get-in v [:front-left :y])}]))
+             {:width (:width v) :height (:length v) :fill (:color v) :x (get-in v [:front-left :x]) :y (get-in v [:front-left :y])}]))
          flatten
          vec)]
        [:line {:x1 0 :y1 centre-y :x2 x-max :y2 centre-y :stroke "yellow"}]
@@ -68,18 +73,34 @@
    [:h1 {:className "title"} "Four way junction"]
    [:div {:className "app-container"}
     [:div {:className "simulation"}
-     [visualisation @state]]
+     (if @state
+       [visualisation @state]
+       [:h1 "...getting simulation"])]
     ]])
+
+
+(defn next-tick []
+  (if (not @state)
+    (println "Next tick called when there is no state...!")
+    (swap! state (fn [s] (if (< (:time-slot s) (dec (count (:vehicles s))))
+                           (update s :time-slot inc)
+                           s)))))
+
+(defn start []
+  (-> (.fetch js/window "http://localhost:8081/api/v1/simulation/junction/four-way")
+      (.then (fn [res] (.text res)))
+      (.then
+       (fn [body]
+         (let [data (reader/read-string body)]
+           (println (:layout data) (:time-slot-to-vehicles data))
+           (reset! state {:layout (:layout data)
+                          :vehicles (:time-slot-to-vehicles data)
+                          :time-slot 0})
+           (when @interval (js/clearInterval @interval))
+           (js/setInterval next-tick (:resolution-ms data)))))
+      (.catch (fn [err] (println "Error in start: " (.-message err))))))
 
 (defn init []
   (println "I'm a work in progress...")
-  (rd/render [home-page] (.getElementById js/document "root")))
-
-(defn next-tick []
-  (swap! state (fn [s] (if (< (:time-slot s) (dec (count (:vehicles s))))
-                         (update s :time-slot inc)
-                         s))))
-
-(defonce car-interval
-  (let [update-ms 50]
-    (js/setInterval next-tick update-ms)))
+  (rd/render [home-page] (.getElementById js/document "root"))
+  (start))
